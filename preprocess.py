@@ -58,13 +58,36 @@ df.columns = ["target", "message"]
 
 df["message_len"] = df["message"].apply(len)
 
+# -------- LINK HANDLING MENU --------
+print("\nLink handling:")
+print("1 - Remove links")
+print("2 - Convert links to 'http' token")
+
+choice = input("Choose option (1/2): ").strip()
+
+PROCESS_LINKS = choice == "2"
+
 # -------- TEXT CLEANING --------
 print("Cleaning text...")
 
 def clean_text(text):
     text = str(text).lower()
     text = re.sub(r'\[.*?\]', '', text)
-    text = re.sub(r'https?://\S+|www\.\S+', '', text)
+
+    # Handle links based on selected mode
+    if PROCESS_LINKS:
+        text = re.sub(
+            r'https?://\S+|www\.\S+',
+            ' http ',
+            text
+        )
+    else:
+        text = re.sub(
+            r'https?://\S+|www\.\S+',
+            '',
+            text
+        )
+
     text = re.sub(r'<.*?>+', '', text)
     text = re.sub(r'[%s]' % re.escape(string.punctuation), '', text)
     text = re.sub(r'\n', '', text)

@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # -------- SETTINGS --------
-DATA_PATH = "processed_data/sms_spam_processed.csv"
+DATA_PATH = "../processed_data/sms_spam_processed.csv"
 
 # -------- LOAD DATA --------
 print("\nLoading data...")
