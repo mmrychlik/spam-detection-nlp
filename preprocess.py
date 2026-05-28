@@ -3,13 +3,14 @@ import zipfile
 import os
 import re
 import string
+import html
 import nltk
 
 from nltk.corpus import stopwords
 from nltk.stem import SnowballStemmer
 from sklearn.preprocessing import LabelEncoder
 
-nltk.download("stopwords")
+# nltk.download("stopwords")
 
 # -------- SETTINGS --------
 RAW_DIR = "raw_data"
@@ -70,28 +71,51 @@ PROCESS_LINKS = choice == "2"
 # -------- TEXT CLEANING --------
 print("Cleaning text...")
 
+
 def clean_text(text):
-    text = str(text).lower()
-    text = re.sub(r'\[.*?\]', '', text)
+    # 1. Cast to string FIRST to avoid errors if a row is NaN/null
+    text = str(text)
 
-    # Handle links based on selected mode
+    # 2. Unescape HTML entities (Safely translates &lt;#&gt; to <#>)
+    text = html.unescape(text)
+
+    # 3. Fix mojibake apostrophes BEFORE lowercasing
+    text = text.replace('‰Û÷', "'").replace('‰Ûª', "'")
+
+    # 4. Remove dataset-specific privacy artifacts
+    text = text.replace('<#>', ' ').replace('ltgt', ' ')
+
+    # 5. Lowercase
+    text = text.lower()
+
+    # 6. Remove text in brackets and stray HTML tags
+    text = re.sub(r'\[.*?\]', ' ', text)
+    text = re.sub(r'<.*?>+', ' ', text)
+
+    # 7. Handle links based on global PROCESS_LINKS flag
+    link_pattern = r'https?://\S+|www\.\S+|\S+\.com\S*'
     if PROCESS_LINKS:
-        text = re.sub(
-            r'https?://\S+|www\.\S+',
-            ' http ',
-            text
-        )
+        text = re.sub(link_pattern, ' http ', text)
     else:
-        text = re.sub(
-            r'https?://\S+|www\.\S+',
-            '',
-            text
-        )
+        text = re.sub(link_pattern, ' ', text)
 
-    text = re.sub(r'<.*?>+', '', text)
-    text = re.sub(r'[%s]' % re.escape(string.punctuation), '', text)
-    text = re.sub(r'\n', '', text)
-    text = re.sub(r'\w*\d\w*', '', text)
+    # -------------------------------------------------------------
+    # 8. THE CRITICAL FIX: Handle Currency BEFORE Punctuation
+    # -------------------------------------------------------------
+    text = re.sub(r'(å£|£|\$|€|¥)', ' $$$ ', text)
+
+    # 9. Strip punctuation EXCEPT the dollar sign (so $$$ survives)
+    custom_punctuation = string.punctuation.replace('$', '')
+    text = re.sub(r'[%s]' % re.escape(custom_punctuation), ' ', text)
+
+    # 10. Remove line breaks and alphanumeric numbers (e.g., "win100")
+    text = re.sub(r'\n', ' ', text)
+    text = re.sub(r'\w*\d\w*', ' ', text)
+
+    # 11. Final Cleanup: Collapse multiple spaces into a single space
+    # (Because replacing everything with ' ' creates huge whitespace gaps)
+    text = re.sub(r'\s+', ' ', text).strip()
+
     return text
 
 df["message_clean"] = df["message"].apply(clean_text)

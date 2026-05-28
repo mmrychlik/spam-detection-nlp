@@ -24,14 +24,16 @@ ham_wc = WordCloud(
     width=800,
     height=400,
     background_color="white",
-    max_words=100
+    max_words=100,
+    stopwords={""}
 ).generate(ham_text)
 
 spam_wc = WordCloud(
     width=800,
     height=400,
     background_color="white",
-    max_words=100
+    max_words=100,
+    stopwords={""}
 ).generate(spam_text)
 
 # -------- PLOT --------
