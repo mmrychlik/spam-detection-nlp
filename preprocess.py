@@ -73,47 +73,38 @@ print("Cleaning text...")
 
 
 def clean_text(text):
-    # 1. Cast to string FIRST to avoid errors if a row is NaN/null
     text = str(text)
 
-    # 2. Unescape HTML entities (Safely translates &lt;#&gt; to <#>)
     text = html.unescape(text)
 
-    # 3. Fix mojibake apostrophes BEFORE lowercasing
     text = text.replace('‰Û÷', "'").replace('‰Ûª', "'")
+    text = text.replace('Û÷', "'")
+    text = text.replace('åÕ', "'")
+    text = text.replace('ÛÒ', " ")
+    text = text.replace('Û', " ")
+    text = text.replace('Ì', "I").replace('ì', "i")
 
-    # 4. Remove dataset-specific privacy artifacts
     text = text.replace('<#>', ' ').replace('ltgt', ' ')
 
-    # 5. Lowercase
     text = text.lower()
 
-    # 6. Remove text in brackets and stray HTML tags
     text = re.sub(r'\[.*?\]', ' ', text)
     text = re.sub(r'<.*?>+', ' ', text)
 
-    # 7. Handle links based on global PROCESS_LINKS flag
     link_pattern = r'https?://\S+|www\.\S+|\S+\.com\S*'
     if PROCESS_LINKS:
         text = re.sub(link_pattern, ' http ', text)
     else:
         text = re.sub(link_pattern, ' ', text)
 
-    # -------------------------------------------------------------
-    # 8. THE CRITICAL FIX: Handle Currency BEFORE Punctuation
-    # -------------------------------------------------------------
     text = re.sub(r'(å£|£|\$|€|¥)', ' $$$ ', text)
 
-    # 9. Strip punctuation EXCEPT the dollar sign (so $$$ survives)
     custom_punctuation = string.punctuation.replace('$', '')
     text = re.sub(r'[%s]' % re.escape(custom_punctuation), ' ', text)
 
-    # 10. Remove line breaks and alphanumeric numbers (e.g., "win100")
     text = re.sub(r'\n', ' ', text)
     text = re.sub(r'\w*\d\w*', ' ', text)
 
-    # 11. Final Cleanup: Collapse multiple spaces into a single space
-    # (Because replacing everything with ' ' creates huge whitespace gaps)
     text = re.sub(r'\s+', ' ', text).strip()
 
     return text
