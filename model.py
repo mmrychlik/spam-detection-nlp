@@ -14,21 +14,26 @@ X_pure = df["message_clean"].values
 y = df["target_encoded"].values
 
 # -------- VECTORIZERS --------
-# we have 2902 features with at least 2 occurrences
-# -------- EXPERIMENT 1: CountVectorizer (Bag of Words) --------
+# -------- EXPERIMENT 1: CountVectorizer (Standard) --------
 print("\nRunning CountVectorizer...")
-count_vec = CountVectorizer(max_features=2902)
+count_vec = CountVectorizer(min_df=2)
 X_count = count_vec.fit_transform(X_pure).toarray()
 print(f"CountVectorizer Shape: {X_count.shape}")
 
 # -------- EXPERIMENT 2: TfidfVectorizer (Standard) --------
 print("\nRunning TfidfVectorizer...")
-tfidf_vec = TfidfVectorizer(max_features=2902)
+tfidf_vec = TfidfVectorizer(min_df=2)
 X_tfidf = tfidf_vec.fit_transform(X_pure).toarray()
 print(f"TF-IDF Shape: {X_tfidf.shape}")
 
-# -------- EXPERIMENT 3: TfidfVectorizer (with Bigrams) --------
-print("\nRunning TF-IDF with Unigrams + Bigrams...")
-tfidf_ngram = TfidfVectorizer(max_features=2902, ngram_range=(1, 2))
-X_ngram = tfidf_ngram.fit_transform(X_pure).toarray()
-print(f"TF-IDF (N-gram) Shape: {X_ngram.shape}")
+# -------- EXPERIMENT 3: CountVectorizer (with Bigrams) --------
+print("\nRunning CountVectorizer with Bigrams...")
+count_ngram = CountVectorizer(min_df=2, ngram_range=(1, 2))
+X_count_ngram = count_ngram.fit_transform(X_pure).toarray()
+print(f"CountVectorizer Shape: {X_count_ngram.shape}")
+
+# -------- EXPERIMENT 4: TfidfVectorizer (with Bigrams) --------
+print("\nRunning TfidfVectorizer with Bigrams...")
+tfidf_ngram = TfidfVectorizer(min_df=2, ngram_range=(1, 2))
+X_tfidf_ngram = tfidf_ngram.fit_transform(X_pure).toarray()
+print(f"TF-IDF (N-gram) Shape: {X_tfidf_ngram.shape}")
