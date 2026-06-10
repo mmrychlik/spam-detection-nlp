@@ -30,10 +30,10 @@ print(f"TF-IDF Shape: {X_tfidf.shape}")
 print("\nRunning CountVectorizer with Bigrams...")
 count_ngram = CountVectorizer(min_df=2, ngram_range=(1, 2))
 X_count_ngram = count_ngram.fit_transform(X_pure).toarray()
-print(f"CountVectorizer Shape: {X_count_ngram.shape}")
+print(f"CountVectorizer (with Bigrams) Shape: {X_count_ngram.shape}")
 
 # -------- EXPERIMENT 4: TfidfVectorizer (with Bigrams) --------
 print("\nRunning TfidfVectorizer with Bigrams...")
 tfidf_ngram = TfidfVectorizer(min_df=2, ngram_range=(1, 2))
 X_tfidf_ngram = tfidf_ngram.fit_transform(X_pure).toarray()
-print(f"TF-IDF (N-gram) Shape: {X_tfidf_ngram.shape}")
+print(f"TF-IDF (with Bigrams) Shape: {X_tfidf_ngram.shape}")
