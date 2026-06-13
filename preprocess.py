@@ -5,6 +5,7 @@ import re
 import string
 import html
 import nltk
+import shutil
 
 from nltk.corpus import stopwords
 from nltk.stem import SnowballStemmer
@@ -26,7 +27,6 @@ if os.path.exists(OUTPUT_SMS):
     os.remove(OUTPUT_SMS)
 
 if os.path.exists(TEMP_DIR):
-    import shutil
     shutil.rmtree(TEMP_DIR)
 
 os.makedirs(TEMP_DIR, exist_ok=True)
@@ -56,25 +56,11 @@ df = pd.read_csv(
 
 df = df[["v1", "v2"]]
 df.columns = ["target", "message"]
-
 df["message_len"] = df["message"].apply(len)
 
-# -------- LINK HANDLING MENU --------
-print("\nLink handling:")
-print("1 - Remove links")
-print("2 - Convert links to 'http' token")
-
-choice = input("Choose option (1/2): ").strip()
-
-PROCESS_LINKS = choice == "2"
-
-# -------- TEXT CLEANING --------
-print("Cleaning text...")
-
-
-def clean_text(text):
+# -------- TEXT CLEANING FUNCTION --------
+def clean_text(text, custom_processing=False):
     text = str(text)
-
     text = html.unescape(text)
 
     text = text.replace('‰Û÷', "'").replace('‰Ûª', "'")
@@ -83,7 +69,6 @@ def clean_text(text):
     text = text.replace('ÛÒ', " ")
     text = text.replace('Û', " ")
     text = text.replace('Ì', "I").replace('ì', "i")
-
     text = text.replace('<#>', ' ').replace('ltgt', ' ')
 
     text = text.lower()
@@ -92,60 +77,55 @@ def clean_text(text):
     text = re.sub(r'<.*?>+', ' ', text)
 
     link_pattern = r'https?://\S+|www\.\S+|\S+\.com\S*'
-    if PROCESS_LINKS:
-        text = re.sub(link_pattern, ' http ', text)
-    else:
-        text = re.sub(link_pattern, ' ', text)
 
-    text = re.sub(r'(å£|£|\$|€|¥)', ' $$$ ', text)
+    # -------- CONDITIONAL FEATURE ENGINEERING --------
+    if custom_processing:
+        text = re.sub(link_pattern, ' http ', text)
+        text = re.sub(r'(å£|£|\$|€|¥)', ' $$$ ', text)
+    else:
+
+        text = re.sub(link_pattern, ' ', text)
 
     custom_punctuation = string.punctuation.replace('$', '')
     text = re.sub(r'[%s]' % re.escape(custom_punctuation), ' ', text)
 
     text = re.sub(r'\n', ' ', text)
     text = re.sub(r'\w*\d\w*', ' ', text)
-
     text = re.sub(r'\s+', ' ', text).strip()
 
     return text
 
-df["message_clean"] = df["message"].apply(clean_text)
-
-# -------- STOPWORDS --------
-print("Removing stopwords...")
-
-stop_words = stopwords.words("english")
-more_stopwords = ["u", "im", "c"]
-stop_words = stop_words + more_stopwords
+# -------- STOPWORDS & STEMMING HELPERS --------
+stop_words = stopwords.words("english") + ["u", "im", "c"]
+stemmer = SnowballStemmer("english")
 
 def remove_stopwords(text):
-    return " ".join(
-        word for word in text.split()
-        if word not in stop_words
-    )
-
-df["message_clean"] = df["message_clean"].apply(remove_stopwords)
-
-# -------- STEMMING --------
-print("Stemming text...")
-
-stemmer = SnowballStemmer("english")
+    return " ".join(word for word in text.split() if word not in stop_words)
 
 def stem_text(text):
     return " ".join(stemmer.stem(word) for word in text.split())
 
-df["message_clean"] = df["message_clean"].apply(stem_text)
+def pipeline_clean(series, custom_processing):
+    """Applies the full cleaning, stopword removal, and stemming pipeline."""
+    cleaned = series.apply(lambda x: clean_text(x, custom_processing=custom_processing))
+    cleaned = cleaned.apply(remove_stopwords)
+    return cleaned.apply(stem_text)
 
-# -------- LABEL ENCODING --------
+# -------- PROCESS BOTH VERSIONS --------
+print("Processing text (Default pipeline)...")
+df["message_clean_default"] = pipeline_clean(df["message"], custom_processing=False)
+
+print("Processing text (Custom pipeline)...")
+df["message_clean_custom"] = pipeline_clean(df["message"], custom_processing=True)
+
+# -------- LABEL ENCODING & DUPLICATE DROPPING --------
 print("Encoding labels...")
-
 le = LabelEncoder()
 df["target_encoded"] = le.fit_transform(df["target"])
 
-# -------- FINAL CLEANUP --------
-df = df.drop_duplicates().reset_index(drop=True)
+df = df.drop_duplicates(subset=["message_clean_default", "message_clean_custom"]).reset_index(drop=True)
 
-# -------- SAVE --------
+# -------- SAVE & CLEANUP --------
 df.to_csv(OUTPUT_SMS, index=False)
 
 print("\nDONE")
@@ -153,5 +133,4 @@ print(f"Total messages: {len(df)}")
 print(f"Ham/Spam distribution:\n{df['target_encoded'].value_counts()}")
 print(f"Saved to: {OUTPUT_SMS}")
 
-import shutil
 shutil.rmtree(TEMP_DIR)

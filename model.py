@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import os
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.model_selection import StratifiedKFold, cross_validate
 from sklearn.naive_bayes import MultinomialNB
@@ -9,17 +10,23 @@ from sklearn.pipeline import Pipeline
 
 # -------- SETTINGS --------
 DATA_PATH = "./processed_data/sms_spam_processed.csv"
+OUTPUT_RESULTS = "./processed_data/model_experiment_results.csv"
 
 # -------- LOAD DATA --------
 print("\nLoading data...")
 df = pd.read_csv(DATA_PATH)
-df["message_clean"] = df["message_clean"].fillna("")
 
-X_pure = df["message_clean"].values
+df["message_clean_default"] = df["message_clean_default"].fillna("")
+df["message_clean_custom"] = df["message_clean_custom"].fillna("")
+
 y = df["target_encoded"].values
 
+preprocessing_variants = {
+    "Default": df["message_clean_default"].values,
+    "Custom": df["message_clean_custom"].values
+}
+
 # -------- VECTORIZERS --------
-print("\nSetting up pipelines...")
 vectorizers = {
     "CountVectorizer": CountVectorizer(min_df=2),
     "TfidfVectorizer": TfidfVectorizer(min_df=2),
@@ -40,47 +47,55 @@ scoring_metrics = ['accuracy', 'precision', 'recall', 'f1']
 
 # -------- EXPERIMENT RUNNER --------
 print("\nStarting Cross-Validation Experiments...")
-print("-" * 80)
+print("-" * 95)
 
 results_list = []
 
-for vec_name, vec in vectorizers.items():
-    print(f"\nEvaluating vectorizer: {vec_name}")
+for prep_name, X_data in preprocessing_variants.items():
+    print(f"\nEvaluating pipeline variant: [ {prep_name} ]")
 
-    for model_name, model in models.items():
-        pipeline = Pipeline([
-            ('vectorizer', vec),
-            ('classifier', model)
-        ])
+    for vec_name, vec in vectorizers.items():
+        for model_name, model in models.items():
+            pipeline = Pipeline([
+                ('vectorizer', vec),
+                ('classifier', model)
+            ])
 
-        scores = cross_validate(
-            pipeline,
-            X_pure,
-            y,
-            cv=cv,
-            scoring=scoring_metrics,
-            n_jobs=-1
-        )
+            scores = cross_validate(
+                pipeline,
+                X_data,
+                y,
+                cv=cv,
+                scoring=scoring_metrics,
+                n_jobs=-1
+            )
 
-        mean_accuracy = np.mean(scores['test_accuracy'])
-        mean_precision = np.mean(scores['test_precision'])
-        mean_recall = np.mean(scores['test_recall'])
-        mean_f1 = np.mean(scores['test_f1'])
+            mean_accuracy = np.mean(scores['test_accuracy'])
+            mean_precision = np.mean(scores['test_precision'])
+            mean_recall = np.mean(scores['test_recall'])
+            mean_f1 = np.mean(scores['test_f1'])
 
-        print(
-            f"  > {model_name:<20} | F1: {mean_f1:.4f} | Precision: {mean_precision:.4f} | Recall: {mean_recall:.4f}")
+            print(f"  > {vec_name:<25} + {model_name:<20} | F1: {mean_f1:.4f}")
 
-        results_list.append({
-            "Vectorizer": vec_name,
-            "Model": model_name,
-            "F1-Score": mean_f1,
-            "Precision": mean_precision,
-            "Recall": mean_recall,
-            "Accuracy": mean_accuracy
-        })
+            results_list.append({
+                "Pipeline Setup": prep_name,
+                "Vectorizer": vec_name,
+                "Model": model_name,
+                "F1-Score": mean_f1,
+                "Precision": mean_precision,
+                "Recall": mean_recall,
+                "Accuracy": mean_accuracy
+            })
 
-# -------- SUMMARY --------
-print("\n" + "=" * 35 + " FINAL LEADERBOARD (Ranked by F1) " + "=" * 35)
+# -------- SUMMARY LEADERBOARD --------
+print("\n" + "=" * 42 + " FINAL LEADERBOARD (Ranked by F1) " + "=" * 42)
 results_df = pd.DataFrame(results_list)
 results_df = results_df.sort_values(by="F1-Score", ascending=False).reset_index(drop=True)
+
+pd.set_option('display.max_columns', None)
+pd.set_option('display.width', 1000)
 print(results_df.to_string(index=False))
+
+# -------- SAVE RESULTS FOR GRAPHING --------
+results_df.to_csv(OUTPUT_RESULTS, index=False)
+print(f"\nSaved metrics database to: {OUTPUT_RESULTS}")
