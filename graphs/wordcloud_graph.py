@@ -20,7 +20,9 @@ def generate_wc(text_data):
         background_color="white",
         max_words=100,
         stopwords={""},
-        regexp=r"\w+|\$+"
+        regexp=r"\w+|\$+",
+        collocations = False,
+        include_numbers=True
     ).generate(text_data)
 
 # -------- PREPARE TEXTS & GENERATE --------
