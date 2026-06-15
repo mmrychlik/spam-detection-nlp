@@ -102,7 +102,6 @@ for setup in plot_setups:
         edgecolor="black"
     )
 
-    # Cosmetics
     plt.title(setup["title"], fontsize=13, fontweight='bold', pad=15)
     plt.xlabel("Classification Models", fontsize=11, labelpad=8)
     plt.ylabel("Mean F1-Score (5-Fold CV)", fontsize=11, labelpad=8)
@@ -110,11 +109,9 @@ for setup in plot_setups:
     # STRICT STATIC Y-AXIS LIMITS
     plt.ylim(0.75, 1.00)
 
-    # Add precise value labels to the top of every bar
     for container in ax.containers:
         ax.bar_label(container, fmt='%.4f', padding=4, fontsize=9, fontweight='semibold')
 
-    # Legend locked to upper right corner
     plt.legend(title="Text Setup", loc="upper right", framealpha=0.9)
     plt.tight_layout()
 

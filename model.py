@@ -43,7 +43,7 @@ models = {
 
 # -------- CROSS-VALIDATION SETUP --------
 cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
-scoring_metrics = ['accuracy', 'precision', 'recall', 'f1']
+scoring_metrics = ['balanced_accuracy', 'precision', 'recall', 'f1']
 
 # -------- EXPERIMENT RUNNER --------
 print("\nStarting Cross-Validation Experiments...")
@@ -70,7 +70,7 @@ for prep_name, X_data in preprocessing_variants.items():
                 n_jobs=-1
             )
 
-            mean_accuracy = np.mean(scores['test_accuracy'])
+            mean_accuracy = np.mean(scores['test_balanced_accuracy'])
             mean_precision = np.mean(scores['test_precision'])
             mean_recall = np.mean(scores['test_recall'])
             mean_f1 = np.mean(scores['test_f1'])
@@ -84,7 +84,7 @@ for prep_name, X_data in preprocessing_variants.items():
                 "F1-Score": mean_f1,
                 "Precision": mean_precision,
                 "Recall": mean_recall,
-                "Accuracy": mean_accuracy
+                "Balanced Accuracy": mean_accuracy
             })
 
 # -------- SUMMARY LEADERBOARD --------
