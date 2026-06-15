@@ -63,6 +63,7 @@ def clean_text(text, custom_processing=False):
     text = str(text)
     text = html.unescape(text)
 
+    # -------- CLEAN UP ENCODING ISSUES --------
     text = text.replace('‰Û÷', "'").replace('‰Ûª', "'")
     text = text.replace('Û÷', "'")
     text = text.replace('åÕ', "'")
@@ -83,14 +84,19 @@ def clean_text(text, custom_processing=False):
         text = re.sub(link_pattern, ' http ', text)
         text = re.sub(r'(å£|£|\$|€|¥)', ' $$$ ', text)
     else:
-
         text = re.sub(link_pattern, ' ', text)
+        text = re.sub(r'(å£|£|\$|€|¥)', ' ', text)
 
     custom_punctuation = string.punctuation.replace('$', '')
     text = re.sub(r'[%s]' % re.escape(custom_punctuation), ' ', text)
 
     text = re.sub(r'\n', ' ', text)
-    text = re.sub(r'\w*\d\w*', ' ', text)
+    
+    if custom_processing:
+        text = re.sub(r'\w*\d\w*', ' 123 ', text)
+    else:
+        text = re.sub(r'\w*\d\w*', ' ', text)
+
     text = re.sub(r'\s+', ' ', text).strip()
 
     return text
@@ -106,7 +112,6 @@ def stem_text(text):
     return " ".join(stemmer.stem(word) for word in text.split())
 
 def pipeline_clean(series, custom_processing):
-    """Applies the full cleaning, stopword removal, and stemming pipeline."""
     cleaned = series.apply(lambda x: clean_text(x, custom_processing=custom_processing))
     cleaned = cleaned.apply(remove_stopwords)
     return cleaned.apply(stem_text)

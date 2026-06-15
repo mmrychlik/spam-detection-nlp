@@ -28,17 +28,17 @@ preprocessing_variants = {
 
 # -------- VECTORIZERS --------
 vectorizers = {
-    "CountVectorizer": CountVectorizer(min_df=2),
-    "TfidfVectorizer": TfidfVectorizer(min_df=2),
-    "CountVectorizer (Bigrams)": CountVectorizer(min_df=2, ngram_range=(1, 2)),
-    "TfidfVectorizer (Bigrams)": TfidfVectorizer(min_df=2, ngram_range=(1, 2))
+    "CountVectorizer": CountVectorizer(min_df=5),
+    "TfidfVectorizer": TfidfVectorizer(min_df=5),
+    "CountVectorizer (Bigrams)": CountVectorizer(min_df=5, ngram_range=(1, 2)),
+    "TfidfVectorizer (Bigrams)": TfidfVectorizer(min_df=5, ngram_range=(1, 2))
 }
 
 # -------- MODELS --------
 models = {
     "MultinomialNB": MultinomialNB(),
-    "LogisticRegression": LogisticRegression(class_weight='balanced', max_iter=1000, random_state=42),
-    "LinearSVC": LinearSVC(class_weight='balanced', max_iter=2000, random_state=42)
+    "LogisticRegression": LogisticRegression(max_iter=1000, random_state=42),
+    "LinearSVC": LinearSVC(max_iter=2000, random_state=42)
 }
 
 # -------- CROSS-VALIDATION SETUP --------
