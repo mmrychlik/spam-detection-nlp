@@ -45,6 +45,9 @@ models = {
 cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
 scoring_metrics = ['balanced_accuracy', 'precision', 'recall', 'f1']
 
+from sklearn.model_selection import cross_val_predict
+from sklearn.metrics import confusion_matrix
+
 # -------- EXPERIMENT RUNNER --------
 print("\nStarting Cross-Validation Experiments...")
 print("-" * 95)
@@ -70,6 +73,9 @@ for prep_name, X_data in preprocessing_variants.items():
                 n_jobs=-1
             )
 
+            y_pred = cross_val_predict(pipeline, X_data, y, cv=cv, n_jobs=-1)
+            tn, fp, fn, tp = confusion_matrix(y, y_pred).ravel()
+
             mean_accuracy = np.mean(scores['test_balanced_accuracy'])
             mean_precision = np.mean(scores['test_precision'])
             mean_recall = np.mean(scores['test_recall'])
@@ -84,7 +90,11 @@ for prep_name, X_data in preprocessing_variants.items():
                 "F1-Score": mean_f1,
                 "Precision": mean_precision,
                 "Recall": mean_recall,
-                "Balanced Accuracy": mean_accuracy
+                "Balanced Accuracy": mean_accuracy,
+                "FP": fp,
+                "FN": fn,
+                "TN": tn,
+                "TP": tp
             })
 
 # -------- SUMMARY LEADERBOARD --------
