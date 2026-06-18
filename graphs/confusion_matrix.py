@@ -3,11 +3,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# -------- 1. LOAD DATA --------
 FILE_PATH = "../processed_data/model_experiment_results.csv"
 df = pd.read_csv(FILE_PATH)
 
-# -------- 2. SELECT MODEL INDEX --------
+# select model index from result file
 MODEL_INDEX = 0
 # MODEL_INDEX = 8
 
@@ -27,11 +26,9 @@ TP = int(selected_model["TP"])
 print(f"Loaded index {MODEL_INDEX}: {classifier_name}")
 print(f"TN: {TN}, FP: {FP}, FN: {FN}, TP: {TP}")
 
-# -------- 3. PREPARE DATA FOR VISUALIZATION --------
 matrix = np.array([[TN, FP],
                    [FN, TP]])
 
-# -------- 4. DRAW THE CHART --------
 sns.set_context("talk")
 plt.figure(figsize=(8, 6))
 
@@ -45,6 +42,5 @@ plt.title(f"{graph_title}", fontsize=20, pad=20, weight="bold")
 plt.xlabel("Predicted", fontsize=18, labelpad=15)
 plt.ylabel("Actual", fontsize=18, labelpad=15)
 
-# -------- 5. DISPLAY --------
 plt.tight_layout()
 plt.show()
